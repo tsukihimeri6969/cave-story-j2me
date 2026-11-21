@@ -120,7 +120,7 @@ def conv(n,body):
     b=re.sub(r'if \(!(npc\w+\[N\])\)',r'if (\1 == 0)',b)
     b=b.replace('&& npcWait[N] / 2 % 2 != 0)','&& (npcWait[N] / 2 % 2 != 0))')
     return b
-out=['    // ==== generated from CSE2 ====']
+out=['    // ==== generated from CSE2 (MIT-licensed decompilation of Doukutsu) by tools/port_npcs.py ====']
 disp=[]
 for n in WANT:
     if n not in funcs: warn.append('missing %d'%n); continue
