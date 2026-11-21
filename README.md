@@ -96,9 +96,7 @@ The d-pad is rotated to match the sideways screen.
 
 ## Status
 
-Working: levels, music, sound effects, cutscenes, inventory, all weapons, the death and retry loop, and most enemies.
-
-Not done yet: most boss fights still use simplified behaviour. A proper port of the boss code (Ballos, Ohm, the Core, the Press and the rest) is the next big job.
+most boss fights still use simplified behaviour so a proper port of the boss code (Ballos, Ohm, the Core, the Press and the rest) is on the agenda
 
 ## Credits
 
