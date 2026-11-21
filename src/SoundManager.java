@@ -7,7 +7,7 @@ public class SoundManager {
     private int currentTrack = -1;
     private int prevTrack = -1;
 
-    // ---- sound effects ----
+    // ---- sound effects (PixTone, synthesised at run time: see Sfx.java) ----
     private final Sfx sfx = new Sfx();
     private final long[] lastPlayed = new long[160];
 
@@ -27,7 +27,7 @@ public class SoundManager {
 
     public boolean toggleSfx() {
         Sfx.enabled = !Sfx.enabled;
-        if (!Sfx.enabled) sfx.stopAll();
+        if (!Sfx.enabled) sfx.stopAll(); else if (Sfx.disabledByCrash) Sfx.clearCrash();
         return Sfx.enabled;
     }
 

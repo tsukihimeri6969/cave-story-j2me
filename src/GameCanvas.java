@@ -651,6 +651,53 @@ public class GameCanvas extends Canvas implements Runnable {
         }
     }
 
+    /**
+     * The first tick of many original NPC routines (act_no == 0) nudges the entity off its map position, e.g.
+     * Kazuma at the computer moves 4 px left and 16 px down so that he sits in the chair.  Types that run the
+     * ported original code get this for free; for every other type the same nudge is applied once at spawn.
+     * Values are in pixels, taken from the case-0 block of each routine (NpcAct*.cpp).
+     */
+    private void applySpawnOffset(int i) {
+        int t = npcType[i];
+        if (isPorted(t)) return;
+        int dx = 0, dy = 0;
+        boolean right = npcDir[i] == 2;
+        switch (t) {
+            case 5: case 24: case 28: case 64: case 147: case 153: case 203: case 241: dy = 3; break;
+            case 0: case 21: if (right) dy = 16; break;
+            case 25: dx = 8; break;
+            case 30: if (npcDir[i] != 0) dy = 16; break;                  // sleeping hermit
+            case 43: dy = -16; break;
+            case 62: case 92: dx = -4; dy = 16; break;                    // Kazuma / Sue at the computer
+            case 91: case 100: case 234: dy = 16; break;
+            case 102: dy = 8; break;
+            case 194: dy = 4; break;
+            case 222: dy = -8; break;
+            case 300: dy = 6; break;
+            case 349: if (!right) dx = 8; else dy = 16; break;
+            case 114: case 212: case 246: dy = -4; break;
+            case 138: dx = right ? -8 : 8; break;
+            case 149: case 157: case 184: dx = 8; dy = 8; break;
+            case 152: if (right) dy = 16; break;
+            case 185: dy = 8; break;
+            case 193: dx = 24; break;
+            case 205: case 313: dy = 4; break;
+            case 228: case 256: case 274: case 276: case 298: case 317: case 337: dy = -8; break;
+            case 229: case 305: dy = -16; break;
+            case 230: dx = -16; dy = -16; break;
+            case 239: if (!right) { dx = 8; dy = 16; } break;
+            case 247: dy = 6; break;
+            case 261: case 262: dx = -1; dy = -2; break;
+            case 268: dy = 8; break;
+            case 307: dx = 1; dy = -2; break;
+            case 322: if (!right) dy = 8; else dx = 8; break;
+            case 326: dx = 16; dy = -8; break;
+            default: return;
+        }
+        npcX[i] += dx * 0x200;
+        npcY[i] += dy * 0x200;
+    }
+
     private void initNpcStats(int i) {
         int t = npcType[i];
         npcState[i] = 0;
@@ -704,6 +751,7 @@ public class GameCanvas extends Canvas implements Runnable {
                     npcType[i] = tp;
                     npcBits[i] = bt | tblBits(tp);   // like the original: table bits | entity bits
                     initNpcStats(i);
+                    applySpawnOffset(i);
                     // like the original: the flag test happens once, when the stage is loaded
                     if ((npcBits[i] & 0x0800) != 0) {
                         npcAlive[i] = flg >= 0 && flg < flags.length && flags[flg];
@@ -1490,6 +1538,7 @@ public class GameCanvas extends Canvas implements Runnable {
                         npcVx[i] = 0;
                         npcVy[i] = 0;
                         npcAnim[i] = 0;
+                        applySpawnOffset(i);
                         if (isPorted(tp)) actNpcPort(i, tp);     // the original runs the new AI once straight away
                     }
                 }
@@ -2287,6 +2336,13 @@ public class GameCanvas extends Canvas implements Runnable {
         } catch (Throwable t) {
         } finally {
             if (rs != null) { try { rs.closeRecordStore(); } catch (Throwable t) {} }
+        }
+        if (lastHang != null) {
+            // shown once on the title screen, then forgotten; sound effects start off after a hang (press * to turn them on)
+            try { javax.microedition.rms.RecordStore.deleteRecordStore("cshang"); } catch (Throwable t) {}
+            Sfx.markCrash();
+        } else if (Sfx.disabledByCrash) {
+            lastHang = "sound effects are off because the phone froze while playing one (press * to try again)";
         }
     }
 
@@ -3598,6 +3654,7 @@ public class GameCanvas extends Canvas implements Runnable {
         npcBits[n] = tblBits(code);
         initNpcStats(n);
         npcDir[n] = d;
+        applySpawnOffset(n);
         npcPar[n] = parent;
         if (n >= npcCount) npcCount = n + 1;
         return n;
@@ -3772,6 +3829,128 @@ public class GameCanvas extends Canvas implements Runnable {
 		if (npcDir[N] == 2)
 			;
 	}
+    }
+
+    // 62 Kazuma at computer
+    private void act062(int N) {
+
+	switch (npcState[N])
+	{
+		case 0:
+			npcX[N] -= 4 * 0x200;
+			npcY[N] += 16 * 0x200;
+			npcState[N] = 1;
+			npcAniNo[N] = 0;
+			npcAniWait[N] = 0;
+			// Fallthrough
+		case 1:
+			if (++npcAniWait[N] > 2)
+			{
+				npcAniWait[N] = 0;
+				++npcAniNo[N];
+			}
+
+			if (npcAniNo[N] > 1)
+				npcAniNo[N] = 0;
+
+			if (rnd(0, 80) == 1)
+			{
+				npcState[N] = 2;
+				npcWait[N] = 0;
+				npcAniNo[N] = 1;
+			}
+
+			if (rnd(0, 120) == 10)
+			{
+				npcState[N] = 3;
+				npcWait[N] = 0;
+				npcAniNo[N] = 2;
+			}
+
+			break;
+
+		case 2:
+			if (++npcWait[N] > 40)
+			{
+				npcState[N] = 3;
+				npcWait[N] = 0;
+				npcAniNo[N] = 2;
+			}
+
+			break;
+
+		case 3:
+			if (++npcWait[N] > 80)
+			{
+				npcState[N] = 1;
+				npcAniNo[N] = 0;
+			}
+
+			break;
+	}
+
+	;
+    }
+
+    // 92 Sue at PC
+    private void act092(int N) {
+
+	switch (npcState[N])
+	{
+		case 0:
+			npcX[N] -= 4 * 0x200;
+			npcY[N] += 16 * 0x200;
+			npcState[N] = 1;
+			npcAniNo[N] = 0;
+			npcAniWait[N] = 0;
+			// Fallthrough
+		case 1:
+			if (++npcAniWait[N] > 2)
+			{
+				npcAniWait[N] = 0;
+				++npcAniNo[N];
+			}
+
+			if (npcAniNo[N] > 1)
+				npcAniNo[N] = 0;
+
+			if (rnd(0, 80) == 1)
+			{
+				npcState[N] = 2;
+				npcWait[N] = 0;
+				npcAniNo[N] = 1;
+			}
+
+			if (rnd(0, 120) == 10)
+			{
+				npcState[N] = 3;
+				npcWait[N] = 0;
+				npcAniNo[N] = 2;
+			}
+
+			break;
+
+		case 2:
+			if (++npcWait[N] > 40)
+			{
+				npcState[N] = 3;
+				npcWait[N] = 0;
+				npcAniNo[N] = 2;
+			}
+
+			break;
+
+		case 3:
+			if (++npcWait[N] > 80)
+			{
+				npcState[N] = 1;
+				npcAniNo[N] = 0;
+			}
+
+			break;
+	}
+
+	;
     }
 
     // 12 Balrog (cutscene)
@@ -7553,6 +7732,8 @@ public class GameCanvas extends Canvas implements Runnable {
     private boolean isPorted(int t) {
         switch (t) {
             case 4:
+            case 62:
+            case 92:
             case 12:
             case 18:
             case 22:
@@ -7604,6 +7785,8 @@ public class GameCanvas extends Canvas implements Runnable {
     private boolean actNpcPort(int i, int t) {
         switch (t) {
             case 4: act004(i); return true;
+            case 62: act062(i); return true;
+            case 92: act092(i); return true;
             case 12: act012(i); return true;
             case 18: act018(i); return true;
             case 22: act022(i); return true;
