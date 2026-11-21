@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+MIDlet-Name: 洞窟物語
+MIDlet-Version: 0.3.0
+MIDlet-Vendor: TsuuGW
+MIDlet-Icon: /icon.png
+MIDlet-1: 洞窟物語, /icon.png, CSMidlet
+MicroEdition-Profile: MIDP-2.0
+MicroEdition-Configuration: CLDC-1.1
